@@ -26,6 +26,7 @@ from typing import Dict, Optional, Sequence, List
 import torch
 
 import transformers
+from transformers import CLIPVisionModel, CLIPConfig
 
 from videollava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, \
     DEFAULT_IM_END_TOKEN, DEFAULT_VIDEO_TOKEN, DEFAULT_VID_START_TOKEN, DEFAULT_VID_END_TOKEN, MAX_IMAGE_LENGTH, \
@@ -909,26 +910,40 @@ def train():
     if model_args.image_tower is not None or model_args.video_tower is not None:
     # ==========================================================================
         if 'mpt' in model_args.model_name_or_path:
-            config = transformers.AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
+            config = transformers.AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True, ignore_mismatched_sizes=True)
             config.attn_config['attn_impl'] = training_args.mpt_attn_impl
             model = LlavaMPTForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
                 config=config,
                 cache_dir=training_args.cache_dir,
-                **bnb_model_from_pretrained_args
+                **bnb_model_from_pretrained_args,
+                ignore_mismatched_sizes=True
             )
         else:
             model = LlavaLlamaForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
                 cache_dir=training_args.cache_dir,
-                **bnb_model_from_pretrained_args
+                **bnb_model_from_pretrained_args,
+                ignore_mismatched_sizes=True
             )
     else:
         model = transformers.LlamaForCausalLM.from_pretrained(
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
-            **bnb_model_from_pretrained_args
+            **bnb_model_from_pretrained_args,
+            ignore_mismatched_sizes=True
         )
+
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"Train: Total number of parameters: {total_params}")
+    layer_params = []
+    for name, layer in model.named_modules():
+        num_params = sum(p.numel() for p in layer.parameters())
+        if num_params > 0: layer_params.append((name, num_params))
+    print("numerator: ", sum([i for (name, i) in layer_params[-70:]]))
+    print("denominator: ", sum([i for (name, i) in layer_params]))
+    print("Grand total: ",sum([i for (name, i) in layer_params[-70:]])/sum([i for (name, i) in layer_params]))
+        
     model.config.use_cache = False
 
     if model_args.freeze_backbone:
@@ -970,7 +985,8 @@ def train():
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
             model_max_length=training_args.model_max_length,
-            padding_side="right"
+            padding_side="right",
+            ignore_mismatched_sizes=True
         )
     else:
         tokenizer = transformers.AutoTokenizer.from_pretrained(
@@ -979,6 +995,7 @@ def train():
             model_max_length=training_args.model_max_length,
             padding_side="right",
             use_fast=False,
+            ignore_mismatched_sizes=True
         )
 
     if model_args.version == "v0":
@@ -1006,12 +1023,20 @@ def train():
         )
         if model_args.image_tower is not None:
             image_tower = model.get_image_tower()
+            # image_config = CLIPConfig.from_pretrained(model_args.image_tower, ignore_mismatched_sizes=True)
+            # print("Loaded Image Config:", image_config)
+            # image_tower = CLIPVisionModel(config=image_config)
+            ###
             image_tower.to(dtype=torch.bfloat16 if training_args.bf16 else torch.float16, device=training_args.device)
 
             data_args.image_processor = image_tower.image_processor
             data_args.is_multimodal = True
         if model_args.video_tower is not None:
             video_tower = model.get_video_tower()
+            # video_config = CLIPConfig.from_pretrained(model_args.video_tower, ignore_mismatched_sizes=True)
+            # print("Loaded Video Config:", video_config)
+            # video_tower = CLIPVisionModel(config=video_config)
+            ###
             video_tower.to(dtype=torch.bfloat16 if training_args.bf16 else torch.float16, device=training_args.device)
 
             data_args.video_processor = video_tower.video_processor

@@ -1,18 +1,18 @@
 
-JSON_FOLDER="llava_all_image_video/pt_json"
-IMAGE_FOLDER="llava_all_image_video"
-VIDEO_FOLDER="llava_all_image_video"
+JSON_FOLDER="/home/ec2-user/Video-LLaVA/playground/Video-LLaVA/train_json"
+IMAGE_FOLDER="/home/ec2-user/Video-LLaVA/playground/Video-LLaVA"
+VIDEO_FOLDER="/home/ec2-user/Video-LLaVA/playground/Video-LLaVA"
 
-cd /path/to/Video-LLaVA
+cd /home/ec2-user/Video-LLaVA
 HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1 deepspeed videollava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
-    --model_name_or_path lmsys/vicuna-7b-v1.5 \
+     --model_name_or_path /home/ec2-user/Video-LLaVA/Tiny-Vicuna-1B \
     --version v1 \
     --data_path ${JSON_FOLDER}/llava_image_.json ${JSON_FOLDER}/valley_.json \
     --image_folder ${IMAGE_FOLDER} \
-    --image_tower LanguageBind/LanguageBind_Image \
+    --image_tower /home/ec2-user/Video-LLaVA/LanguageBind_Image \
     --video_folder ${VIDEO_FOLDER} \
-    --video_tower LanguageBind/LanguageBind_Video_merge \
+    --video_tower /home/ec2-user/Video-LLaVA/LanguageBind_Video_merge \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
     --mm_vision_select_layer -2 \
@@ -21,7 +21,7 @@ HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1 deepspeed videollava/train/train_me
     --bf16 True \
     --output_dir ./checkpoints/videollava-7b-pretrain \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 32 \
+    --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
@@ -36,7 +36,7 @@ HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1 deepspeed videollava/train/train_me
     --tf32 True \
     --model_max_length 2048  --tokenizer_model_max_length 3072 \
     --gradient_checkpointing True \
-    --dataloader_num_workers 8 \
+    --dataloader_num_workers 1 \
     --lazy_preprocess True \
     --report_to tensorboard \
     --cache_dir "./cache_dir"

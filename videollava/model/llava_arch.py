@@ -99,7 +99,23 @@ class LlavaMetaModel:
         self.config.mm_vision_select_layer = mm_vision_select_layer
         self.config.mm_vision_select_feature = mm_vision_select_feature
         # ==========================================================================
+        image_tower.config.hidden_size = 1024
+        print(f"Image Tower Hidden Size: {image_tower.hidden_size}")
+        print(f"Video Tower Hidden Size: {video_tower.hidden_size}")
+        print(f"Image Tower Config: {image_tower.config}")
+        print(f"Video Tower Config: {video_tower.config}")
+
         if image_tower is not None and video_tower is not None:  # TODO: support different hidden_size
+            ##################
+            target_hidden_size = max(image_tower.hidden_size, video_tower.hidden_size)
+        
+            if image_tower.hidden_size != target_hidden_size:
+                image_tower.config.hidden_size = target_hidden_size
+            
+            if video_tower.hidden_size != target_hidden_size:
+                video_tower.config.hidden_size = target_hidden_size
+            ##################
+
             assert image_tower.hidden_size == video_tower.hidden_size
             self.config.mm_hidden_size = image_tower.hidden_size
         else:

@@ -17,11 +17,11 @@ class CLIPVisionTower(nn.Module):
         if not delay_load:
             self.load_model()
         else:
-            self.cfg_only = CLIPVisionConfig.from_pretrained(self.vision_tower_name)
+            self.cfg_only = CLIPVisionConfig.from_pretrained(self.vision_tower_name, ignore_mismatched_sizes=True)
 
     def load_model(self):
-        self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
-        self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name)
+        self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name, ignore_mismatched_sizes=True)
+        self.vision_tower = CLIPVisionModel.from_pretrained(self.vision_tower_name, ignore_mismatched_sizes=True)
         self.vision_tower.requires_grad_(False)
 
         self.is_loaded = True

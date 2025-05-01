@@ -61,7 +61,7 @@ class LanguageBind(nn.Module):
         self.modality_config = {}
         for c in clip_type:
             pretrained_ckpt = f'LanguageBind/LanguageBind_{c.capitalize()}'
-            model = model_dict[c].from_pretrained(pretrained_ckpt, cache_dir=cache_dir)
+            model = model_dict[c].from_pretrained(pretrained_ckpt, cache_dir=cache_dir, ignore_mismatched_sizes=True)
             self.modality_encoder[c] = model.vision_model
             self.modality_proj[c] = model.visual_projection
             self.modality_scale[c] = model.logit_scale
@@ -106,11 +106,11 @@ class LanguageBindImageTower(nn.Module):
         if not delay_load:
             self.load_model()
         else:
-            self.cfg_only = LanguageBindImageConfig.from_pretrained(self.image_tower_name, cache_dir=self.cache_dir)
+            self.cfg_only = LanguageBindImageConfig.from_pretrained(self.image_tower_name, cache_dir=self.cache_dir, ignore_mismatched_sizes=True)
 
     ############################################################
     def load_model(self):
-        model = LanguageBindImage.from_pretrained(self.image_tower_name, cache_dir=self.cache_dir)
+        model = LanguageBindImage.from_pretrained(self.image_tower_name, cache_dir=self.cache_dir, ignore_mismatched_sizes=True)
         self.image_tower = model.vision_model
         self.image_tower.requires_grad_(False)
 
@@ -188,11 +188,11 @@ class LanguageBindVideoTower(nn.Module):
         if not delay_load:
             self.load_model()
         else:
-            self.cfg_only = LanguageBindVideoConfig.from_pretrained(self.video_tower_name, cache_dir=self.cache_dir)
+            self.cfg_only = LanguageBindVideoConfig.from_pretrained(self.video_tower_name, cache_dir=self.cache_dir, ignore_mismatched_sizes=True)
 
     ############################################################
     def load_model(self):
-        model = LanguageBindVideo.from_pretrained(self.video_tower_name, cache_dir=self.cache_dir)
+        model = LanguageBindVideo.from_pretrained(self.video_tower_name, cache_dir=self.cache_dir, ignore_mismatched_sizes=True)
         self.video_processor = LanguageBindVideoProcessor(model.config)
 
 
