@@ -120,7 +120,7 @@ class SimpleResBlock(nn.Module):
         return x + self.proj(x)
 
 
-def build_vision_projector(config, delay_load=False, **kwargs):
+def build_vision_projector_lora(config, delay_load=False, **kwargs):
     projector_type = getattr(config, 'mm_projector_type', 'linear')
 
     if projector_type == 'linear':

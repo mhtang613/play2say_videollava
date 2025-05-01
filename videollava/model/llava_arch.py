@@ -20,6 +20,8 @@ import torch.nn as nn
 
 from .multimodal_encoder.builder import build_image_tower, build_video_tower
 from .multimodal_projector.builder import build_vision_projector
+from .multimodal_projector.builder_topk import build_vision_projector_topk
+from .multimodal_projector.builder_lora import build_vision_projector_lora
 
 from videollava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 
@@ -34,7 +36,12 @@ class LlavaMetaModel:
         if getattr(config, "mm_video_tower", None) is not None:
             self.video_tower = build_video_tower(config, delay_load=True)
         if getattr(config, "mm_image_tower", None) is not None or getattr(config, "mm_video_tower", None) is not None:
-            self.mm_projector = build_vision_projector(config)
+            if getattr(config, "lora_proj", None) == true: 
+                self.mm_projector = build_vision_projector_lora(config)
+            elif getattr(config, "topk_proj", None) == true: 
+                self.mm_projector = build_vision_projector_topk(config)
+            else: 
+                self.mm_projector = build_vision_projector(config)
 
     def get_image_tower(self):
         image_tower = getattr(self, 'image_tower', None)
